@@ -34,8 +34,8 @@ const SPRITE_DIMENSIONS: Record<string, { width: number; height: number }> = {
 // Mapping of building types to their PNG image paths and size multipliers
 const BUILDING_IMAGES: Partial<Record<BuildingType, { src: string; tileWidth: number; tileHeight: number; scale?: number; verticalOffset?: number }>> = {
   // Residential buildings (1x1)
-  house_small: { src: '/assets/buildings/house_small.png', tileWidth: 1, tileHeight: 1, verticalOffset: 12 },
-  house_medium: { src: '/assets/buildings/house_medium.png', tileWidth: 1, tileHeight: 1, verticalOffset: 12 },
+  house_small: { src: '/assets/buildings/house_small.png', tileWidth: 1, tileHeight: 1, scale: 0.8, verticalOffset: 12 },
+  house_medium: { src: '/assets/buildings/house_medium.png', tileWidth: 1, tileHeight: 1, scale: 0.8, verticalOffset: 12 },
   apartment_low: { src: '/assets/buildings/residential.png', tileWidth: 1, tileHeight: 1, verticalOffset: 14 },
   apartment_high: { src: '/assets/buildings/residential.png', tileWidth: 1, tileHeight: 1, verticalOffset: 18 },
   mansion: { src: '/assets/buildings/residential.png', tileWidth: 1, tileHeight: 1, verticalOffset: 16 },
