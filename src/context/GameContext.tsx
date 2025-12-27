@@ -277,6 +277,38 @@ function loadGameState(): GameState | null {
         if (parsed.gameVersion === undefined) {
           parsed.gameVersion = 0;
         }
+
+        // Ensure service coverage grids exist (backward compatibility)
+        const gridSize = typeof parsed.gridSize === 'number'
+          ? parsed.gridSize
+          : Array.isArray(parsed.grid)
+            ? parsed.grid.length
+            : 0;
+        const createServiceGrid = (): number[][] =>
+          Array.from({ length: gridSize }, () => new Array(gridSize).fill(0));
+        const createBoolGrid = (): boolean[][] =>
+          Array.from({ length: gridSize }, () => new Array(gridSize).fill(false));
+
+        if (!parsed.services) {
+          parsed.services = {
+            police: createServiceGrid(),
+            fire: createServiceGrid(),
+            health: createServiceGrid(),
+            education: createServiceGrid(),
+            higherEducation: createServiceGrid(),
+            power: createBoolGrid(),
+            water: createBoolGrid(),
+          };
+        } else {
+          if (!parsed.services.police) parsed.services.police = createServiceGrid();
+          if (!parsed.services.fire) parsed.services.fire = createServiceGrid();
+          if (!parsed.services.health) parsed.services.health = createServiceGrid();
+          if (!parsed.services.education) parsed.services.education = createServiceGrid();
+          if (!parsed.services.higherEducation) parsed.services.higherEducation = createServiceGrid();
+          if (!parsed.services.power) parsed.services.power = createBoolGrid();
+          if (!parsed.services.water) parsed.services.water = createBoolGrid();
+        }
+
         // Migrate to include UUID if missing
         if (!parsed.id) {
           parsed.id = generateUUID();
@@ -696,7 +728,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // PERF: Just mark that state has changed - defer expensive deep copy to actual save time
   const stateChangedRef = useRef(false);
   const latestStateRef = useRef(state);
-  latestStateRef.current = state;
+  
+  // Keep ref in sync without mutating during render
+  useEffect(() => {
+    latestStateRef.current = state;
+  }, [state]);
   
   useEffect(() => {
     if (!hasLoadedRef.current) {
@@ -1149,6 +1185,28 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             }
           }
         }
+
+        // Ensure service coverage grids exist (backward compatibility)
+        const gridSize = parsed.gridSize;
+        const createServiceGrid = (): number[][] =>
+          Array.from({ length: gridSize }, () => new Array(gridSize).fill(0));
+        const createBoolGrid = (): boolean[][] =>
+          Array.from({ length: gridSize }, () => new Array(gridSize).fill(false));
+
+        if (!parsed.services) {
+          parsed.services = {
+            police: createServiceGrid(),
+            fire: createServiceGrid(),
+            health: createServiceGrid(),
+            education: createServiceGrid(),
+            higherEducation: createServiceGrid(),
+            power: createBoolGrid(),
+            water: createBoolGrid(),
+          };
+        } else {
+          if (!parsed.services.higherEducation) parsed.services.higherEducation = createServiceGrid();
+        }
+
         // Increment gameVersion to clear vehicles/entities when loading a new state
         setState((prev) => ({
           ...(parsed as GameState),
@@ -1252,6 +1310,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           police: expandServiceGrid(prev.services.police),
           health: expandServiceGrid(prev.services.health),
           education: expandServiceGrid(prev.services.education),
+          higherEducation: expandServiceGrid(prev.services.higherEducation),
         },
         // Update bounds
         bounds: {
@@ -1351,6 +1410,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           police: shrinkServiceGrid(prev.services.police),
           health: shrinkServiceGrid(prev.services.health),
           education: shrinkServiceGrid(prev.services.education),
+          higherEducation: shrinkServiceGrid(prev.services.higherEducation),
         },
         // Update bounds
         bounds: {
@@ -1408,6 +1468,26 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const restoreSavedCity = useCallback((): boolean => {
     const savedState = loadSavedCityState();
     if (savedState) {
+      // Ensure service coverage grids exist (backward compatibility)
+      const gridSize = savedState.gridSize ?? (Array.isArray(savedState.grid) ? savedState.grid.length : 0);
+      const createServiceGrid = (): number[][] =>
+        Array.from({ length: gridSize }, () => new Array(gridSize).fill(0));
+      const createBoolGrid = (): boolean[][] =>
+        Array.from({ length: gridSize }, () => new Array(gridSize).fill(false));
+      if (!savedState.services) {
+        savedState.services = {
+          police: createServiceGrid(),
+          fire: createServiceGrid(),
+          health: createServiceGrid(),
+          education: createServiceGrid(),
+          higherEducation: createServiceGrid(),
+          power: createBoolGrid(),
+          water: createBoolGrid(),
+        };
+      } else if (!savedState.services.higherEducation) {
+        savedState.services.higherEducation = createServiceGrid();
+      }
+
       skipNextSaveRef.current = true;
       setState(savedState);
       clearSavedCityStorage();
@@ -1525,6 +1605,26 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           }
         }
       }
+    }
+
+    // Ensure service coverage grids exist (backward compatibility)
+    const gridSize = cityState.gridSize ?? (Array.isArray(cityState.grid) ? cityState.grid.length : 0);
+    const createServiceGrid = (): number[][] =>
+      Array.from({ length: gridSize }, () => new Array(gridSize).fill(0));
+    const createBoolGrid = (): boolean[][] =>
+      Array.from({ length: gridSize }, () => new Array(gridSize).fill(false));
+    if (!cityState.services) {
+      cityState.services = {
+        police: createServiceGrid(),
+        fire: createServiceGrid(),
+        health: createServiceGrid(),
+        education: createServiceGrid(),
+        higherEducation: createServiceGrid(),
+        power: createBoolGrid(),
+        water: createBoolGrid(),
+      };
+    } else if (!cityState.services.higherEducation) {
+      cityState.services.higherEducation = createServiceGrid();
     }
     
     skipNextSaveRef.current = true;

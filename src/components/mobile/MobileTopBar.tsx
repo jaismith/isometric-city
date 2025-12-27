@@ -112,7 +112,7 @@ export function MobileTopBar({
   onExit,
 }: { 
   selectedTile: Tile | null;
-  services: { police: number[][]; fire: number[][]; health: number[][]; education: number[][]; power: boolean[][]; water: boolean[][] };
+  services: { police: number[][]; fire: number[][]; health: number[][]; education: number[][]; higherEducation: number[][]; power: boolean[][]; water: boolean[][] };
   onCloseTile: () => void;
   onExit?: () => void;
 }) {

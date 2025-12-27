@@ -40,6 +40,7 @@ const OVERLAY_ICONS: Record<OverlayMode, React.ReactNode> = {
   police: <SafetyIcon size={14} />,
   health: <HealthIcon size={14} />,
   education: <EducationIcon size={14} />,
+  higherEducation: <EducationIcon size={14} />,
   subway: <SubwayIcon size={14} />,
 };
 

@@ -322,6 +322,7 @@ export interface ServiceCoverage {
   fire: number[][];
   health: number[][];
   education: number[][];
+  higherEducation: number[][];
   power: boolean[][];
   water: boolean[][];
 }

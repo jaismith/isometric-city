@@ -218,6 +218,7 @@ const UI_LABELS = {
   police: msg('Police'),
   health: msg('Health'),
   education: msg('Education'),
+  higherEducation: msg('Higher Ed'),
   subway: msg('Subway'),
   budget: msg('Budget'),
   statistics: msg('Statistics'),
@@ -238,7 +239,7 @@ const toolCategories = {
   'SPECIAL': ['stadium', 'museum', 'airport', 'space_program', 'city_hall', 'amusement_park'] as Tool[],
 };
 
-type OverlayMode = 'none' | 'power' | 'water' | 'fire' | 'police' | 'health' | 'education' | 'subway';
+type OverlayMode = 'none' | 'power' | 'water' | 'fire' | 'police' | 'health' | 'education' | 'higherEducation' | 'subway';
 
 interface MobileToolbarProps {
   onOpenPanel: (panel: 'budget' | 'statistics' | 'advisors' | 'settings') => void;
@@ -490,6 +491,14 @@ export function MobileToolbar({ onOpenPanel, overlayMode = 'none', setOverlayMod
                     onClick={() => setOverlayMode('education')}
                   >
                     {m(UI_LABELS.education)}
+                  </Button>
+                  <Button
+                    variant={overlayMode === 'higherEducation' ? 'default' : 'ghost'}
+                    size="sm"
+                    className={`h-10 w-full text-xs ${overlayMode === 'higherEducation' ? 'bg-indigo-500 hover:bg-indigo-600' : ''}`}
+                    onClick={() => setOverlayMode('higherEducation')}
+                  >
+                    {m(UI_LABELS.higherEducation)}
                   </Button>
                   <Button
                     variant={overlayMode === 'subway' ? 'default' : 'ghost'}

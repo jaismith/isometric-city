@@ -1103,6 +1103,7 @@ function createServiceCoverage(size: number): ServiceCoverage {
     fire: createGrid(),
     health: createGrid(),
     education: createGrid(),
+    higherEducation: createGrid(),
     power: createBoolGrid(),
     water: createBoolGrid(),
   };
@@ -1192,7 +1193,7 @@ export const SERVICE_CONFIG = {
   fire_station: withRange(18, { type: 'fire' as const }),
   hospital: withRange(24, { type: 'health' as const }),
   school: withRange(11, { type: 'education' as const }),
-  university: withRange(19, { type: 'education' as const }),
+  university: withRange(19, { type: 'higherEducation' as const }),
   power_plant: withRange(15, {}),
   water_tower: withRange(12, {}),
 } as const;
@@ -1271,7 +1272,7 @@ function calculateServiceCoverage(grid: Tile[][], size: number): ServiceCoverage
       }
     } else {
       // Handle percentage-based coverage (police, fire, health, education)
-      const serviceType = (config as { type: 'police' | 'fire' | 'health' | 'education' }).type;
+      const serviceType = (config as { type: 'police' | 'fire' | 'health' | 'education' | 'higherEducation' }).type;
       const currentCoverage = services[serviceType] as number[][];
       
       for (let ny = minY; ny <= maxY; ny++) {
