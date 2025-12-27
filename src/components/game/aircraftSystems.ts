@@ -198,11 +198,14 @@ export function useAircraftSystems(
     // Update existing airplanes
     const updatedAirplanes: Airplane[] = [];
     
-    for (const plane of airplanesRef.current) {
+    for (const currentPlane of airplanesRef.current) {
+      // Work on a copy to satisfy immutability lint rules (refs are treated as immutable inputs).
+      const plane: Airplane = { ...currentPlane };
+
       // Update contrail particles - shorter duration on mobile for performance
       const contrailMaxAge = isMobile ? 0.8 : CONTRAIL_MAX_AGE;
       const contrailSpawnInterval = isMobile ? 0.06 : CONTRAIL_SPAWN_INTERVAL;
-      plane.contrail = plane.contrail
+      let contrail = currentPlane.contrail
         .map(p => ({ ...p, age: p.age + delta, opacity: Math.max(0, 1 - p.age / contrailMaxAge) }))
         .filter(p => p.age < contrailMaxAge);
       
@@ -216,9 +219,10 @@ export function useAircraftSystems(
           const downOffset = 8; // Vertical offset down
           const contrailX = plane.x - Math.cos(plane.angle) * behindOffset;
           const contrailY = plane.y - Math.sin(plane.angle) * behindOffset + downOffset;
-          plane.contrail.push({ x: contrailX, y: contrailY, age: 0, opacity: 1 });
+          contrail = [...contrail, { x: contrailX, y: contrailY, age: 0, opacity: 1 }];
         }
       }
+      plane.contrail = contrail;
       
       // Update based on state
       switch (plane.state) {
@@ -407,7 +411,10 @@ export function useAircraftSystems(
     // Update existing helicopters
     const updatedHelicopters: Helicopter[] = [];
     
-    for (const heli of helicoptersRef.current) {
+    for (const currentHeli of helicoptersRef.current) {
+      // Work on a copy to satisfy immutability lint rules (refs are treated as immutable inputs).
+      const heli: Helicopter = { ...currentHeli };
+
       // Update rotor animation
       heli.rotorAngle += delta * 25; // Fast rotor spin
       
@@ -419,7 +426,7 @@ export function useAircraftSystems(
       // Update rotor wash particles - shorter duration on mobile
       const washMaxAge = isMobile ? 0.4 : ROTOR_WASH_MAX_AGE;
       const washSpawnInterval = isMobile ? 0.08 : ROTOR_WASH_SPAWN_INTERVAL;
-      heli.rotorWash = heli.rotorWash
+      let rotorWash = currentHeli.rotorWash
         .map(p => ({ ...p, age: p.age + delta, opacity: Math.max(0, 1 - p.age / washMaxAge) }))
         .filter(p => p.age < washMaxAge);
       
@@ -431,14 +438,15 @@ export function useAircraftSystems(
           // Single small rotor wash particle behind helicopter
           const behindAngle = heli.angle + Math.PI;
           const offsetDist = 6;
-          heli.rotorWash.push({
+          rotorWash = [...rotorWash, {
             x: heli.x + Math.cos(behindAngle) * offsetDist,
             y: heli.y + Math.sin(behindAngle) * offsetDist,
             age: 0,
             opacity: 1
-          });
+          }];
         }
       }
+      heli.rotorWash = rotorWash;
       
       // Update based on state
       switch (heli.state) {

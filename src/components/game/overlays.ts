@@ -174,8 +174,10 @@ export function getOverlayFillStyle(
       return coverage.health > 0 ? NO_OVERLAY : UNCOVERED_WARNING;
 
     case 'education':
-      // Red warning only on buildings outside education coverage
+      // Education is residential-only: warn only on developed residential buildings
       if (!needsCoverage) return NO_OVERLAY;
+      if (tile.zone !== 'residential') return NO_OVERLAY;
+      if (tile.building.type === 'grass' || tile.building.type === 'empty') return NO_OVERLAY;
       return coverage.education > 0 ? NO_OVERLAY : UNCOVERED_WARNING;
 
     case 'subway':

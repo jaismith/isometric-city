@@ -193,7 +193,17 @@ export function useEffectsSystems(
     // Update existing fireworks
     const updatedFireworks: Firework[] = [];
     
-    for (const firework of fireworksRef.current) {
+    for (const currentFirework of fireworksRef.current) {
+      // Work on a deep-ish copy to satisfy immutability lint rules (refs are treated as immutable inputs).
+      // Firework particles/trails are mutated heavily, so clone them as well.
+      const firework: Firework = {
+        ...currentFirework,
+        particles: currentFirework.particles.map(p => ({
+          ...p,
+          trail: p.trail.map(tp => ({ ...tp })),
+        })),
+      };
+
       firework.age += delta;
       
       switch (firework.state) {
@@ -441,9 +451,11 @@ export function useEffectsSystems(
         
         if (existing && existing.buildingType === factory.type) {
           // Update screen position but keep particles
-          existing.screenX = screenX + chimneyOffsetX;
-          existing.screenY = screenY + chimneyOffsetY;
-          return existing;
+          return {
+            ...existing,
+            screenX: screenX + chimneyOffsetX,
+            screenY: screenY + chimneyOffsetY,
+          };
         }
         
         return {
@@ -459,7 +471,14 @@ export function useEffectsSystems(
     }
     
     // Update each factory's smog
-    for (const smog of factorySmogRef.current) {
+    const updatedFactorySmog: FactorySmog[] = [];
+    for (const currentSmog of factorySmogRef.current) {
+      // Work on a copy to satisfy immutability lint rules (refs are treated as immutable inputs).
+      const smog: FactorySmog = {
+        ...currentSmog,
+        particles: currentSmog.particles.map(p => ({ ...p })),
+      };
+
       // Update spawn timer with mobile multiplier
       const baseSpawnInterval = smog.buildingType === 'factory_large' 
         ? SMOG_SPAWN_INTERVAL_LARGE 
@@ -524,7 +543,10 @@ export function useEffectsSystems(
         
         return true;
       });
+
+      updatedFactorySmog.push(smog);
     }
+    factorySmogRef.current = updatedFactorySmog;
   }, [worldStateRef, gridVersionRef, factorySmogRef, smogLastGridVersionRef, findSmogFactoriesCallback, isMobile]);
 
   // Draw smog particles
