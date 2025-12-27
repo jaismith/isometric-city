@@ -148,14 +148,17 @@ export function useBargeSystem(
     // Update existing barges
     const updatedBarges: Barge[] = [];
     
-    for (const barge of bargesRef.current) {
+    for (const currentBarge of bargesRef.current) {
+      // Work on a copy to satisfy immutability lint rules (refs are treated as immutable inputs).
+      const barge: Barge = { ...currentBarge };
       barge.age += delta;
       
       // Update wake particles
       const wakeMaxAge = isMobile ? 0.8 : WAKE_MAX_AGE;
-      barge.wake = barge.wake
+      let wake = currentBarge.wake
         .map(p => ({ ...p, age: p.age + delta, opacity: Math.max(0, 1 - p.age / wakeMaxAge) }))
         .filter(p => p.age < wakeMaxAge);
+      barge.wake = wake;
       
       // Distance to target
       const distToTarget = Math.hypot(barge.x - barge.targetScreenX, barge.y - barge.targetScreenY);
@@ -309,18 +312,18 @@ export function useBargeSystem(
           // Add two wake particles behind the barge (wider wake for larger vessel)
           const behindBarge = -12;
           const wakeWidth = 8;
-          barge.wake.push({
+          wake = [...wake, {
             x: barge.x + Math.cos(barge.angle) * behindBarge + Math.cos(barge.angle + Math.PI/2) * wakeWidth,
             y: barge.y + Math.sin(barge.angle) * behindBarge + Math.sin(barge.angle + Math.PI/2) * wakeWidth,
             age: 0,
             opacity: 1
-          });
-          barge.wake.push({
+          }, {
             x: barge.x + Math.cos(barge.angle) * behindBarge + Math.cos(barge.angle - Math.PI/2) * wakeWidth,
             y: barge.y + Math.sin(barge.angle) * behindBarge + Math.sin(barge.angle - Math.PI/2) * wakeWidth,
             age: 0,
             opacity: 1
-          });
+          }];
+          barge.wake = wake;
         }
       }
       

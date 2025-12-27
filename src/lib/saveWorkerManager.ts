@@ -5,8 +5,7 @@
 import { compressToUTF16, decompressFromUTF16 } from 'lz-string';
 
 type PendingRequest = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resolve: (value: any) => void;
+  resolve: (value: unknown) => void;
   reject: (error: Error) => void;
   timeoutId: ReturnType<typeof setTimeout>;
 };
@@ -95,7 +94,7 @@ export async function serializeAndCompressAsync(state: unknown): Promise<string>
       }
     }, 15000); // 15 second timeout for larger states
     
-    pendingRequests.set(id, { resolve, reject, timeoutId });
+    pendingRequests.set(id, { resolve: resolve as (value: unknown) => void, reject, timeoutId });
     
     try {
       worker!.postMessage({ type: 'serialize-compress', id, state });
@@ -161,7 +160,7 @@ export async function decompressAndParseAsync<T = unknown>(compressed: string): 
       }
     }, 15000);
     
-    pendingRequests.set(id, { resolve, reject, timeoutId });
+    pendingRequests.set(id, { resolve: resolve as (value: unknown) => void, reject, timeoutId });
     
     try {
       worker!.postMessage({ type: 'decompress-parse', id, compressed });

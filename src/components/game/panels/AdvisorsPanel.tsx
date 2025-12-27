@@ -25,6 +25,7 @@ const UI_LABELS = {
   cityAdvisors: msg('City Advisors'),
   overallCityRating: msg('Overall City Rating'),
   ratingDescription: msg('Based on happiness, health, education, safety & environment'),
+  ratingDescriptionNoResidents: msg('Based on health, safety & environment'),
   noUrgentIssues: msg('No urgent issues to report!'),
   cityRunningSmoothly: msg('Your city is running smoothly.'),
 };
@@ -46,7 +47,10 @@ export function AdvisorsPanel() {
   const { advisorMessages, stats } = state;
   const m = useMessages();
   
-  const avgRating = (stats.happiness + stats.health + stats.education + stats.safety + stats.environment) / 5;
+  const hasResidents = stats.population > 0;
+  const avgRating = hasResidents
+    ? (stats.happiness + stats.health + stats.education + stats.safety + stats.environment) / 5
+    : (stats.health + stats.safety + stats.environment) / 3;
   const grade = avgRating >= 90 ? 'A+' : avgRating >= 80 ? 'A' : avgRating >= 70 ? 'B' : avgRating >= 60 ? 'C' : avgRating >= 50 ? 'D' : 'F';
   const gradeColor = avgRating >= 70 ? 'text-green-400' : avgRating >= 50 ? 'text-amber-400' : 'text-red-400';
   
@@ -66,7 +70,9 @@ export function AdvisorsPanel() {
             </div>
             <div>
               <div className="text-foreground font-semibold">{m(UI_LABELS.overallCityRating)}</div>
-              <div className="text-muted-foreground text-sm">{m(UI_LABELS.ratingDescription)}</div>
+              <div className="text-muted-foreground text-sm">
+                {hasResidents ? m(UI_LABELS.ratingDescription) : m(UI_LABELS.ratingDescriptionNoResidents)}
+              </div>
             </div>
           </Card>
           

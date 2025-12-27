@@ -1541,12 +1541,20 @@ function evolveBuilding(grid: Tile[][], x: number, y: number, services: ServiceC
     zone === 'industrial' ? INDUSTRIAL_BUILDINGS : [];
 
   // Calculate level based on land value, services, and demand
-  const serviceCoverage = (
-    services.police[y][x] +
-    services.fire[y][x] +
-    services.health[y][x] +
-    services.education[y][x]
-  ) / 4;
+  // Education is a residential-only requirement. Commercial/industrial shouldn't be penalized
+  // (or rewarded) for education coverage.
+  const serviceCoverage = zone === 'residential'
+    ? (
+      services.police[y][x] +
+      services.fire[y][x] +
+      services.health[y][x] +
+      services.education[y][x]
+    ) / 4
+    : (
+      services.police[y][x] +
+      services.fire[y][x] +
+      services.health[y][x]
+    ) / 3;
 
   // Get zone demand to factor into level calculation
   const zoneDemandForLevel = demand ? (
@@ -1666,6 +1674,12 @@ function calculateStats(grid: Tile[][], size: number, budget: Budget, taxRate: n
   let subwayStations = 0;
   let railTiles = 0;
   let railStations = 0;
+
+  // Education need is residential-only:
+  // compute a residential-weighted education coverage score and treat education as "not applicable"
+  // when there are no developed residential buildings.
+  let residentialEducationWeight = 0;
+  let residentialEducationWeightedSum = 0;
   
   // Special buildings that affect demand
   let hasAirport = false;
@@ -1695,6 +1709,15 @@ function calculateStats(grid: Tile[][], size: number, budget: Budget, taxRate: n
       if (tile.zone === 'residential') {
         residentialZones++;
         if (building.type !== 'grass' && building.type !== 'empty') developedResidential++;
+
+        // Only developed residential buildings "need" education.
+        if (building.type !== 'grass' && building.type !== 'empty') {
+          // Prefer population-weighting so high-density housing drives education need more,
+          // but fall back to a minimal weight so unpowered/unwatered housing still counts.
+          const weight = Math.max(1, building.population);
+          residentialEducationWeight += weight;
+          residentialEducationWeightedSum += services.education[y][x] * weight;
+        }
       } else if (tile.zone === 'commercial') {
         commercialZones++;
         if (building.type !== 'grass' && building.type !== 'empty') developedCommercial++;
@@ -1804,21 +1827,23 @@ function calculateStats(grid: Tile[][], size: number, budget: Budget, taxRate: n
   const avgPoliceCoverage = calculateAverageCoverage(services.police);
   const avgFireCoverage = calculateAverageCoverage(services.fire);
   const avgHealthCoverage = calculateAverageCoverage(services.health);
-  const avgEducationCoverage = calculateAverageCoverage(services.education);
 
   const safety = Math.min(100, avgPoliceCoverage * 0.7 + avgFireCoverage * 0.3);
   const health = Math.min(100, avgHealthCoverage * 0.8 + (100 - totalPollution / (size * size)) * 0.2);
-  const education = Math.min(100, avgEducationCoverage);
+  const education = residentialEducationWeight > 0
+    ? Math.min(100, residentialEducationWeightedSum / residentialEducationWeight)
+    : 100;
   
   const greenRatio = (treeCount + waterCount + parkCount) / (size * size);
   const pollutionRatio = totalPollution / (size * size * 100);
   const environment = Math.min(100, Math.max(0, greenRatio * 200 - pollutionRatio * 100 + 50));
 
   const jobSatisfaction = jobs >= population ? 100 : (jobs / (population || 1)) * 100;
+  const educationForHappiness = residentialEducationWeight > 0 ? education : 100;
   const happiness = Math.min(100, (
     safety * 0.15 +
     health * 0.2 +
-    education * 0.15 +
+    educationForHappiness * 0.15 +
     environment * 0.15 +
     jobSatisfaction * 0.2 +
     (100 - taxRate * 3) * 0.15
@@ -1918,6 +1943,7 @@ function generateAdvisorMessages(stats: Stats, services: ServiceCoverage, grid: 
   let abandonedResidential = 0;
   let abandonedCommercial = 0;
   let abandonedIndustrial = 0;
+  let developedResidentialBuildings = 0;
   
   for (const row of grid) {
     for (const tile of row) {
@@ -1925,6 +1951,11 @@ function generateAdvisorMessages(stats: Stats, services: ServiceCoverage, grid: 
       if (tile.zone !== 'none' && tile.building.type !== 'grass') {
         if (!tile.building.powered) unpoweredBuildings++;
         if (!tile.building.watered) unwateredBuildings++;
+      }
+
+      // Education is residential-only: track whether the city has any developed housing.
+      if (tile.zone === 'residential' && tile.building.type !== 'grass' && tile.building.type !== 'empty') {
+        developedResidentialBuildings++;
       }
       
       // Count abandoned buildings
@@ -1989,7 +2020,7 @@ function generateAdvisorMessages(stats: Stats, services: ServiceCoverage, grid: 
   }
 
   // Education advisor
-  if (stats.education < 50) {
+  if (developedResidentialBuildings > 0 && stats.education < 50) {
     messages.push({
       name: 'Education Advisor',
       icon: 'education',

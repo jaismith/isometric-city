@@ -640,53 +640,44 @@ function deleteCityState(cityId: string): void {
   }
 }
 
+function hasSavedGameState(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem(STORAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
 export function GameProvider({ children }: { children: React.ReactNode }) {
-  // Start with a default state, we'll load from localStorage after mount
-  const [state, setState] = useState<GameState>(() => createInitialGameState(DEFAULT_GRID_SIZE, 'IsoCity'));
+  // Initialize from localStorage when available (client-side), otherwise fall back to a fresh city.
+  const [state, setState] = useState<GameState>(() => loadGameState() ?? createInitialGameState(DEFAULT_GRID_SIZE, 'IsoCity'));
   
-  const [hasExistingGame, setHasExistingGame] = useState(false);
+  const [hasExistingGame, setHasExistingGame] = useState(() => hasSavedGameState());
   const [isSaving, setIsSaving] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipNextSaveRef = useRef(false);
   const hasLoadedRef = useRef(false);
   
   // Sprite pack state
-  const [currentSpritePack, setCurrentSpritePack] = useState<SpritePack>(() => getSpritePack(DEFAULT_SPRITE_PACK_ID));
+  const [currentSpritePack, setCurrentSpritePack] = useState<SpritePack>(() => getSpritePack(loadSpritePackId()));
   
   // Day/night mode state
-  const [dayNightMode, setDayNightModeState] = useState<DayNightMode>('auto');
+  const [dayNightMode, setDayNightModeState] = useState<DayNightMode>(() => loadDayNightMode());
   
   // Saved cities state for multi-city save system
-  const [savedCities, setSavedCities] = useState<SavedCityMeta[]>([]);
-  
-  // Load game state and sprite pack from localStorage on mount (client-side only)
+  const [savedCities, setSavedCities] = useState<SavedCityMeta[]>(() => loadSavedCitiesIndex());
+
+  // After mount, mark loaded and ensure we don't immediately re-save the just-loaded state.
   useEffect(() => {
-    // Load sprite pack preference
-    const savedPackId = loadSpritePackId();
-    const pack = getSpritePack(savedPackId);
-    setCurrentSpritePack(pack);
-    setActiveSpritePack(pack);
-    
-    // Load day/night mode preference
-    const savedDayNightMode = loadDayNightMode();
-    setDayNightModeState(savedDayNightMode);
-    
-    // Load saved cities index
-    const cities = loadSavedCitiesIndex();
-    setSavedCities(cities);
-    
-    // Load game state
-    const saved = loadGameState();
-    if (saved) {
-      skipNextSaveRef.current = true; // Set skip flag BEFORE updating state
-      setState(saved);
-      setHasExistingGame(true);
-    } else {
-      setHasExistingGame(false);
-    }
-    // Mark as loaded immediately - the skipNextSaveRef will handle skipping the first save
+    skipNextSaveRef.current = hasSavedGameState();
     hasLoadedRef.current = true;
   }, []);
+
+  // Keep the render config in sync (side effect only).
+  useEffect(() => {
+    setActiveSpritePack(currentSpritePack);
+  }, [currentSpritePack]);
   
   // Track the state that needs to be saved
   const lastSaveTimeRef = useRef<number>(0);
@@ -696,7 +687,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // PERF: Just mark that state has changed - defer expensive deep copy to actual save time
   const stateChangedRef = useRef(false);
   const latestStateRef = useRef(state);
-  latestStateRef.current = state;
+  useEffect(() => {
+    latestStateRef.current = state;
+  }, [state]);
   
   useEffect(() => {
     if (!hasLoadedRef.current) {

@@ -146,14 +146,17 @@ export function useBoatSystem(
     // Update existing boats
     const updatedBoats: Boat[] = [];
     
-    for (const boat of boatsRef.current) {
+    for (const currentBoat of boatsRef.current) {
+      // Work on a copy to satisfy immutability lint rules (refs are treated as immutable inputs).
+      const boat: Boat = { ...currentBoat };
       boat.age += delta;
       
       // Update wake particles (similar to contrails) - shorter on mobile
       const wakeMaxAge = isMobile ? 0.6 : WAKE_MAX_AGE;
-      boat.wake = boat.wake
+      let wake = currentBoat.wake
         .map(p => ({ ...p, age: p.age + delta, opacity: Math.max(0, 1 - p.age / wakeMaxAge) }))
         .filter(p => p.age < wakeMaxAge);
+      boat.wake = wake;
       
       // Distance to destination
       const distToDest = Math.hypot(boat.x - boat.destScreenX, boat.y - boat.destScreenY);
@@ -331,12 +334,13 @@ export function useBoatSystem(
 
           // Add single wake particle behind the boat
           const behindBoat = -6; // Position behind the boat
-          boat.wake.push({
+          wake = [...wake, {
             x: boat.x + Math.cos(boat.angle) * behindBoat,
             y: boat.y + Math.sin(boat.angle) * behindBoat,
             age: 0,
             opacity: 1
-          });
+          }];
+          boat.wake = wake;
         }
       }
       
@@ -512,7 +516,7 @@ export function useBoatSystem(
     }
     
     ctx.restore();
-  }, [worldStateRef, boatsRef, visualHour]);
+  }, [worldStateRef, boatsRef, visualHour, isMobile]);
 
   return {
     updateBoats,
