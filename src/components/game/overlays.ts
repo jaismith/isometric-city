@@ -16,6 +16,7 @@ export type ServiceCoverage = {
   police: number;
   health: number;
   education: number;
+  higherEducation: number;
 };
 
 /** Configuration for an overlay mode */
@@ -78,6 +79,12 @@ export const OVERLAY_CONFIG: Record<OverlayMode, OverlayConfig> = {
     activeColor: 'bg-purple-500',
     hoverColor: 'hover:bg-purple-600',
   },
+  higherEducation: {
+    label: 'Higher Ed',
+    title: 'Higher Education Coverage',
+    activeColor: 'bg-indigo-500',
+    hoverColor: 'hover:bg-indigo-600',
+  },
   subway: {
     label: 'Subway',
     title: 'Subway Coverage',
@@ -94,7 +101,7 @@ export const TOOL_TO_OVERLAY_MAP: Record<string, OverlayMode> = {
   police_station: 'police',
   hospital: 'health',
   school: 'education',
-  university: 'education',
+  university: 'higherEducation',
   subway_station: 'subway',
   subway: 'subway',
 };
@@ -178,6 +185,11 @@ export function getOverlayFillStyle(
       if (!needsCoverage) return NO_OVERLAY;
       return coverage.education > 0 ? NO_OVERLAY : UNCOVERED_WARNING;
 
+    case 'higherEducation':
+      // Red warning only on buildings outside higher education coverage
+      if (!needsCoverage) return NO_OVERLAY;
+      return coverage.higherEducation > 0 ? NO_OVERLAY : UNCOVERED_WARNING;
+
     case 'subway':
       // Underground view overlay - keep existing behavior
       return tile.hasSubway
@@ -200,7 +212,7 @@ export function getOverlayForTool(tool: string): OverlayMode {
 
 /** List of all overlay modes (for iteration) */
 export const OVERLAY_MODES: OverlayMode[] = [
-  'none', 'power', 'water', 'fire', 'police', 'health', 'education', 'subway'
+  'none', 'power', 'water', 'fire', 'police', 'health', 'education', 'higherEducation', 'subway'
 ];
 
 // ============================================================================
@@ -215,7 +227,8 @@ export const OVERLAY_TO_BUILDING_TYPES: Record<OverlayMode, string[]> = {
   fire: ['fire_station'],
   police: ['police_station'],
   health: ['hospital'],
-  education: ['school', 'university'],
+  education: ['school'],
+  higherEducation: ['university'],
   subway: ['subway_station'],
 };
 
@@ -228,6 +241,7 @@ export const OVERLAY_CIRCLE_COLORS: Record<OverlayMode, string> = {
   police: 'rgba(147, 197, 253, 0.8)',  // Light blue
   health: 'rgba(134, 239, 172, 0.8)',  // Light green
   education: 'rgba(196, 181, 253, 0.8)', // Light purple
+  higherEducation: 'rgba(129, 140, 248, 0.8)', // Light indigo
   subway: 'rgba(253, 224, 71, 0.8)',   // Yellow
 };
 
@@ -240,6 +254,7 @@ export const OVERLAY_HIGHLIGHT_COLORS: Record<OverlayMode, string> = {
   police: 'rgba(59, 130, 246, 1)',     // Blue
   health: 'rgba(34, 197, 94, 1)',      // Green
   education: 'rgba(168, 85, 247, 1)',  // Purple
+  higherEducation: 'rgba(79, 70, 229, 1)', // Indigo
   subway: 'rgba(234, 179, 8, 1)',      // Yellow
 };
 
@@ -252,5 +267,6 @@ export const OVERLAY_CIRCLE_FILL_COLORS: Record<OverlayMode, string> = {
   police: 'rgba(147, 197, 253, 0.12)',
   health: 'rgba(134, 239, 172, 0.12)',
   education: 'rgba(196, 181, 253, 0.12)',
+  higherEducation: 'rgba(129, 140, 248, 0.12)',
   subway: 'rgba(253, 224, 71, 0.12)',
 };

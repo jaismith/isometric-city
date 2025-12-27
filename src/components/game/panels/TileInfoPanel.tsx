@@ -15,6 +15,7 @@ interface TileInfoPanelProps {
     fire: number[][];
     health: number[][];
     education: number[][];
+    higherEducation: number[][];
     power: boolean[][];
     water: boolean[][];
   };
@@ -128,6 +129,10 @@ export function TileInfoPanel({
           <div className="flex justify-between">
             <span className="text-muted-foreground">Education</span>
             <span>{Math.round(services.education[y][x])}%</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Higher Ed</span>
+            <span>{Math.round(services.higherEducation[y][x])}%</span>
           </div>
         </div>
       </CardContent>

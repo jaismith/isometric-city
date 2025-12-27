@@ -2511,6 +2511,7 @@ export function CanvasIsometricGrid({ overlayMode, selectedTile, setSelectedTile
             police: state.services.police[tile.y][tile.x],
             health: state.services.health[tile.y][tile.x],
             education: state.services.education[tile.y][tile.x],
+            higherEducation: state.services.higherEducation[tile.y][tile.x],
           };
           
           const fillStyle = getOverlayFillStyle(overlayMode, tile, coverage);
